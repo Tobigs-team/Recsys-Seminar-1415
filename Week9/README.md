@@ -15,4 +15,4 @@
 ### 추천시스템 라이브러리 비교
 * 발표자 : 강지우
 * <a href="https://velog.io/@tobigs-recsys/RecommenderSystemLibraries" target="_blank"><img src="https://img.shields.io/badge/Paper Review-20c997?style=flat-square&logo=Vimeo&logoColor=white"/></a>  
-* 코드 참조
+* 해당 디렉토리의 코드 ``Week9_추천시스템 라이브러리 비교.ipynb`` 참조
