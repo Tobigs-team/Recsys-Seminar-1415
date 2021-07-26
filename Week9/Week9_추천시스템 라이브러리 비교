@@ -1,0 +1,953 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.7.4"
+    },
+    "colab": {
+      "name": "rec_sys_library.ipynb",
+      "provenance": []
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "s-pYfhk81kat"
+      },
+      "source": [
+        "# Implicit\n",
+        "\n",
+        "- implicit 데이터에 사용가능한 라이브러리\n",
+        "\n",
+        "- 가장 널리 사용된다.\n",
+        "\n",
+        "#### ALS Collaborative filtering\n",
+        "\n",
+        "- MF모델. ALS(AlternatingLeastSquares, 교대최대제곱법) 모델.\n",
+        "\n",
+        "- 유저행렬과 아이템 행렬을 차례대로 최적화\n",
+        "\n",
+        "#### Baysian Personalized Filtering\n",
+        "\n",
+        "- \"BPR: Bayesian Personalized Ranking from Implicit Feedback.\" 논문의 알고리즘.\n",
+        "\n",
+        "- 기존의 pointwise 기반의 optimization이 아닌 ranking optimization을 적용함. 논문에서는 MF, neighborhood model 모두 적용한다. 여기선 MF만 구현함. [논문](https://arxiv.org/ftp/arxiv/papers/1205/1205.2618.pdf)\n",
+        "\n",
+        "#### Logistic Matrix Factorization\n",
+        "- 2014년 Spotify에서 발표한 논문\n",
+        "\n",
+        "- LMF는 MF에 logistic함수를 도입하여 item에 대한 user의 선호를 확률적으로 모델링한 것. [논문](https://web.stanford.edu/~rezab/nips2014workshop/submits/logmat.pdf)\n",
+        "  \n",
+        "  "
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "heyc3i_y1kav"
+      },
+      "source": [
+        "****\n",
+        "# Surprise\n",
+        "\n",
+        "- explicit 데이터에 사용가능한 라이브러리\n",
+        "\n",
+        "## Basic algorithms\n",
+        "\n",
+        "#### NormalPredictor\n",
+        "\n",
+        "MLE를 통해서 추정한 N(μ^,σ^2)분포를 통해 예측\n",
+        "\n",
+        "- $\\begin{split}\\hat{\\mu} &= \\frac{1}{|R_{train}|} \\sum_{r_{ui} \\in R_{train}}\n",
+        "r_{ui}\\hat{\\sigma} &= \\sqrt{\\sum_{r_{ui} \\in R_{train}}\n",
+        "\\frac{(r_{ui} - \\hat{\\mu})^2}{|R_{train}|}}\\end{split}$\n",
+        "\n",
+        "\n",
+        "#### BaselineOnly\n",
+        "\n",
+        "- $\\hat{r}_{ui} = b_{ui} = \\mu + b_u + b_i$\n",
+        "\n",
+        "user, item 평균치 고려\n",
+        "\n",
+        "## k-NN inspired algorithms\n",
+        "\n",
+        "#### KNNBasic\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\frac{\n",
+        "\\sum\\limits_{v \\in N^k_i(u)} \\text{sim}(u, v) \\cdot r_{vi}}\n",
+        "{\\sum\\limits_{v \\in N^k_i(u)} \\text{sim}(u, v)}$\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\frac{\n",
+        "\\sum\\limits_{j \\in N^k_u(i)} \\text{sim}(i, j) \\cdot r_{uj}}\n",
+        "{\\sum\\limits_{j \\in N^k_u(i)} \\text{sim}(i, j)}$\n",
+        "\n",
+        "- basic한 neighborhood model.\n",
+        "- item based, user based 모두 가능\n",
+        "\n",
+        "#### KNNWithMeans\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\mu_u + \\frac{ \\sum\\limits_{v \\in N^k_i(u)}\n",
+        "\\text{sim}(u, v) \\cdot (r_{vi} - \\mu_v)} {\\sum\\limits_{v \\in\n",
+        "N^k_i(u)} \\text{sim}(u, v)}$\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\mu_i + \\frac{ \\sum\\limits_{j \\in N^k_u(i)}\n",
+        "\\text{sim}(i, j) \\cdot (r_{uj} - \\mu_j)} {\\sum\\limits_{j \\in\n",
+        "N^k_u(i)} \\text{sim}(i, j)}$\n",
+        "\n",
+        "- 각 유저나 아이템의 mean 고려\n",
+        "- basic한 neighborhood model.\n",
+        "- item based, user based 모두 가능\n",
+        "\n",
+        "#### KNNWithZScore\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\mu_u + \\sigma_u \\frac{ \\sum\\limits_{v \\in N^k_i(u)}\n",
+        "\\text{sim}(u, v) \\cdot (r_{vi} - \\mu_v) / \\sigma_v} {\\sum\\limits_{v\n",
+        "\\in N^k_i(u)} \\text{sim}(u, v)}$\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\mu_i + \\sigma_i \\frac{ \\sum\\limits_{j \\in N^k_u(i)}\n",
+        "\\text{sim}(i, j) \\cdot (r_{uj} - \\mu_j) / \\sigma_j} {\\sum\\limits_{j\n",
+        "\\in N^k_u(i)} \\text{sim}(i, j)}$\n",
+        "\n",
+        "- 각 유저나 아이템의 mean, std 고려\n",
+        "- basic한 neighborhood model.\n",
+        "- item based, user based 모두 가능\n",
+        "\n",
+        "#### KNNBaseline\n",
+        "\n",
+        "- $\\hat{r}_{ui} = b_{ui} + \\frac{ \\sum\\limits_{v \\in N^k_i(u)}\n",
+        "\\text{sim}(u, v) \\cdot (r_{vi} - b_{vi})} {\\sum\\limits_{v \\in\n",
+        "N^k_i(u)} \\text{sim}(u, v)}$\n",
+        "\n",
+        "- $\\hat{r}_{ui} = b_{ui} + \\frac{ \\sum\\limits_{j \\in N^k_u(i)}\n",
+        "\\text{sim}(i, j) \\cdot (r_{uj} - b_{uj})} {\\sum\\limits_{j \\in\n",
+        "N^k_u(i)} \\text{sim}(i, j)}$\n",
+        "\n",
+        "- 유저와 아이템의 bias 모두 고려\n",
+        "- basic한 neighborhood model.\n",
+        "- item based, user based 모두 가능\n",
+        "\n",
+        "\n",
+        "\n",
+        "## Matrix Factorization(SVD, SVD++, NMF, PMF)\n",
+        "\n",
+        "\n",
+        "#### SVD\n",
+        "- bias가 있는 기본적인 SVD 모델. \n",
+        "\n",
+        "- 규제항이 있는 squared error를 SGD 한다.  \n",
+        "\n",
+        "$\\hat{r}_{ui} = \\mu + b_u + b_i + q_i^Tp_u$\n",
+        "\n",
+        "\n",
+        "$\\sum_{r_{ui} \\in R_{train}} \\left(r_{ui} - \\hat{r}_{ui} \\right)^2 +\n",
+        "\\lambda\\left(b_i^2 + b_u^2 + ||q_i||^2 + ||p_u||^2\\right)$\n",
+        "\n",
+        "biased = False할 시 bias없는 모델 사용가능\n",
+        "\n",
+        "#### SVD++\n",
+        "\n",
+        "- $\\hat{r}_{ui} = \\mu + b_u + b_i + q_i^T\\left(p_u +\n",
+        "|I_u|^{-\\frac{1}{2}} \\sum_{j \\in I_u}y_j\\right)$\n",
+        "\n",
+        "implicit data 사용. SVD와 같이 규제항이 있는 squared error를 SGD 한다.\n",
+        "\n",
+        "### NMF\n",
+        "\n",
+        "- 음수 미포함 행렬 분해(Non-negative Matrix Factorization, NMF)는 음수를 포함하지 않는 행렬 X를 음수를 포함하지 않는 행렬 W와 H의 곱으로 분해하는 알고리즘\n",
+        "\n",
+        "- non-negative 데이터는 non-negative feature로 설명하는 것이 좋다는 점, feature들의 독립성을 잘 catch 할 수 있다는 점이 장점 [참고](https://angeloyeo.github.io/2020/10/15/NMF.html#%EC%99%9C-nmf%EB%A5%BC-%EC%93%B0%EB%8A%94-%EA%B2%83%EC%9D%B4-%EC%9C%A0%EC%9A%A9%ED%95%A0-%EC%88%98-%EC%9E%88%EC%9D%84%EA%B9%8C)\n",
+        "\n",
+        "- $\\hat{r}_{ui} = q_i^Tp_u$\n",
+        "\n",
+        "- $\\begin{split}p_{uf} &\\leftarrow p_{uf} &\\cdot \\frac{\\sum_{i \\in I_u} q_{if}\n",
+        "\\cdot r_{ui}}{\\sum_{i \\in I_u} q_{if} \\cdot \\hat{r_{ui}} +\n",
+        "\\lambda_u |I_u| p_{uf}}\\\\\n",
+        "q_{if} &\\leftarrow q_{if} &\\cdot \\frac{\\sum_{u \\in U_i} p_{uf}\n",
+        "\\cdot r_{ui}}{\\sum_{u \\in U_i} p_{uf} \\cdot \\hat{r_{ui}} +\n",
+        "\\lambda_i |U_i| q_{if}}\\\\\\end{split}$"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "oyAzo2zr1kax"
+      },
+      "source": [
+        "***\n",
+        "### LightFM\n",
+        "\n",
+        "- implicit, explicit 데이터 모두 사용가능.\n",
+        "\n",
+        "- LightFM 모델 구현가능\n",
+        "\n",
+        "- LightFM은 Collaborative filtering, Content based filtering이 결합된 hybrid model\n",
+        "\n",
+        "$q_u = \\sum_{j \\in f_u}e_j^U$    $p_i = \\sum_{j \\in f_i}e_j^I$ \n",
+        "\n",
+        "\n",
+        "$b_u = \\sum_{j \\in f_u}b_j^U$     $b_i = \\sum_{j \\in f_i}b_j^I$ \n",
+        " \n",
+        "\n",
+        "$\\hat{r}_{ui} = sigmoid(q_u \\odot p_i + b_u + b_i)$\n",
+        "\n",
+        "ex) 아이템이 데님자켓이라면 '데님'과 '자켓'의 latent vector들의 합이 $q_u$, 유저가 미국에 살고 여성이라면 둘의 latent vector의 합이 $p_i$\n",
+        "\n",
+        "유저와 아이템 각각의 feature와 둘 간의 상호작용을 모두 고려할 수 있다.\n",
+        "\n",
+        "cold start 문제를 완화할 수 있다.\n",
+        "\n",
+        "예측 평점이 아웃풋이 아닌 추천 점수가 아웃풋이다. 해당 유저가 해당 아이템을 선호할 확률같은 개념이라고 보면 될 듯하다.\n",
+        "\n",
+        "![img](https://greeksharifa.github.io/public/img/Machine_Learning/2020-06-01-LightFM/01.JPG)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "wMaJXVLt1kax"
+      },
+      "source": [
+        "***\n",
+        "### Buffalo\n",
+        "\n",
+        "- 다른 라이브러리에 비해서 적은 메모리 사용과 빠른 속도를 가짐.\n",
+        "- 아래는 ALS 모델에 대한 비교로, Implicit 라이브러리 보다 좋은 성능을 보여준다.\n",
+        "\n",
+        "<img src=\"https://github.com/kakao/buffalo/raw/master/benchmark/fig/20190828.buffalo.kakaobrunch12m.d.png\" width=\"700\" height=\"600\">\n",
+        "\n",
+        "\n",
+        "- Alternating Least Squares\n",
+        "- Bayesian Personalized Ranking Matrix Factorization\n",
+        "- Word2Vec\n",
+        "- CoFactors \n",
+        "\n",
+        "위의 알고리즘들이 구현되어 있다."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "t-XpXgQK1kay"
+      },
+      "source": [
+        "***\n",
+        "### Spotlight\n",
+        "\n",
+        "- implicit , explicit 데이터 사용가능\n",
+        "\n",
+        "- Factorization models(implicit/explicit), Sequantial models(implicit) 알고리즘이 구현되어 있음\n",
+        "\n",
+        "- sequaltial model을 사용가능한 것이 특징\n",
+        "\n",
+        "\n",
+        "#### Factorization model\n",
+        "\n",
+        "- \"dot product of the item and user latent vectors koren's classic matrix factorization\" 라고 설명하는 것을 보아 SVD알고리즘인 듯 하다. \n",
+        "\n",
+        "  $\\hat{r}_{ui} = \\mu + b_u + b_i + q_i^Tp_u$\n",
+        "\n",
+        "\n",
+        "  $\\sum_{r_{ui} \\in R_{train}} \\left(r_{ui} - \\hat{r}_{ui} \\right)^2 +\n",
+        "  \\lambda\\left(b_i^2 + b_u^2 + ||q_i||^2 + ||p_u||^2\\right)$\n",
+        "\n",
+        "\n",
+        "#### Sequaltial model \n",
+        "\n",
+        "- \"Deep Neural Networks for YouTube Recommendations\"의 pooling model,\n",
+        "\n",
+        "- \"SESSION-BASED RECOMMENDATIONS WITH RECURRENT NEURAL NETWORKS\"의 LSTM model,\n",
+        "\n",
+        "- WaveNet의 causal convolution model \n",
+        "\n",
+        "위의 3가지 종류의 모델 존재"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "enOC165P1kaz"
+      },
+      "source": [
+        "||Implicit|Surprise|LightFM|Buffalo|Spotlight|\n",
+        "|------|:---:|:---:|:---:|:---:|:---:|\n",
+        "|특징|가장 유명함. <br/>implicit만 가능. | explicit만 가능 |LightFM 구현가능 | 빠른 속도 | Sequantial 모델 구현가능|\n",
+        "|implicit data|O|X|O|O|O|\n",
+        "|explicit data|X|O|O|O|O|\n",
+        "|Matrix Factorization|ALS, BPR, logistic MF|SVD, SVD++, NMF|LightFM|ALS, BPR|SVD|\n",
+        "|neighborhood methods| Item-Item Nearest Neighbour models |KNNBasic, KNNwithMeans, KNNwithZscore, KNNBaseline|X |X |X |\n",
+        "|Sequaltial model| X |X |X |X |O |\n",
+        "|LightFM| X|X |O| X|X|\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Jj8afdxf1kaz"
+      },
+      "source": [
+        "참고자료\n",
+        "\n",
+        "https://leehyejin91.github.io/post-bpr/\n",
+        "\n",
+        "https://leehyejin91.github.io/post-logistic_mf/\n",
+        "\n",
+        "https://greeksharifa.github.io/machine_learning/2020/06/01/LightFM/"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "pMHTNg7MALTF",
+        "outputId": "0b56231b-5a0b-441c-9880-4f8106044e72"
+      },
+      "source": [
+        "! pip install lightfm"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Collecting lightfm\n",
+            "\u001b[?25l  Downloading https://files.pythonhosted.org/packages/5e/fe/8864d723daa8e5afc74080ce510c30f7ad52facf6a157d4b42dec83dfab4/lightfm-1.16.tar.gz (310kB)\n",
+            "\r\u001b[K     |█                               | 10kB 12.8MB/s eta 0:00:01\r\u001b[K     |██▏                             | 20kB 17.1MB/s eta 0:00:01\r\u001b[K     |███▏                            | 30kB 12.2MB/s eta 0:00:01\r\u001b[K     |████▎                           | 40kB 12.7MB/s eta 0:00:01\r\u001b[K     |█████▎                          | 51kB 7.9MB/s eta 0:00:01\r\u001b[K     |██████▍                         | 61kB 9.2MB/s eta 0:00:01\r\u001b[K     |███████▍                        | 71kB 7.8MB/s eta 0:00:01\r\u001b[K     |████████▌                       | 81kB 8.5MB/s eta 0:00:01\r\u001b[K     |█████████▌                      | 92kB 8.5MB/s eta 0:00:01\r\u001b[K     |██████████▋                     | 102kB 7.5MB/s eta 0:00:01\r\u001b[K     |███████████▋                    | 112kB 7.5MB/s eta 0:00:01\r\u001b[K     |████████████▊                   | 122kB 7.5MB/s eta 0:00:01\r\u001b[K     |█████████████▊                  | 133kB 7.5MB/s eta 0:00:01\r\u001b[K     |██████████████▉                 | 143kB 7.5MB/s eta 0:00:01\r\u001b[K     |███████████████▉                | 153kB 7.5MB/s eta 0:00:01\r\u001b[K     |█████████████████               | 163kB 7.5MB/s eta 0:00:01\r\u001b[K     |██████████████████              | 174kB 7.5MB/s eta 0:00:01\r\u001b[K     |███████████████████             | 184kB 7.5MB/s eta 0:00:01\r\u001b[K     |████████████████████            | 194kB 7.5MB/s eta 0:00:01\r\u001b[K     |█████████████████████▏          | 204kB 7.5MB/s eta 0:00:01\r\u001b[K     |██████████████████████▏         | 215kB 7.5MB/s eta 0:00:01\r\u001b[K     |███████████████████████▎        | 225kB 7.5MB/s eta 0:00:01\r\u001b[K     |████████████████████████▎       | 235kB 7.5MB/s eta 0:00:01\r\u001b[K     |█████████████████████████▍      | 245kB 7.5MB/s eta 0:00:01\r\u001b[K     |██████████████████████████▍     | 256kB 7.5MB/s eta 0:00:01\r\u001b[K     |███████████████████████████▌    | 266kB 7.5MB/s eta 0:00:01\r\u001b[K     |████████████████████████████▌   | 276kB 7.5MB/s eta 0:00:01\r\u001b[K     |█████████████████████████████▋  | 286kB 7.5MB/s eta 0:00:01\r\u001b[K     |██████████████████████████████▋ | 296kB 7.5MB/s eta 0:00:01\r\u001b[K     |███████████████████████████████▊| 307kB 7.5MB/s eta 0:00:01\r\u001b[K     |████████████████████████████████| 317kB 7.5MB/s \n",
+            "\u001b[?25hRequirement already satisfied: numpy in /usr/local/lib/python3.7/dist-packages (from lightfm) (1.19.5)\n",
+            "Requirement already satisfied: scipy>=0.17.0 in /usr/local/lib/python3.7/dist-packages (from lightfm) (1.4.1)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.7/dist-packages (from lightfm) (2.23.0)\n",
+            "Requirement already satisfied: scikit-learn in /usr/local/lib/python3.7/dist-packages (from lightfm) (0.22.2.post1)\n",
+            "Requirement already satisfied: idna<3,>=2.5 in /usr/local/lib/python3.7/dist-packages (from requests->lightfm) (2.10)\n",
+            "Requirement already satisfied: chardet<4,>=3.0.2 in /usr/local/lib/python3.7/dist-packages (from requests->lightfm) (3.0.4)\n",
+            "Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /usr/local/lib/python3.7/dist-packages (from requests->lightfm) (1.24.3)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.7/dist-packages (from requests->lightfm) (2021.5.30)\n",
+            "Requirement already satisfied: joblib>=0.11 in /usr/local/lib/python3.7/dist-packages (from scikit-learn->lightfm) (1.0.1)\n",
+            "Building wheels for collected packages: lightfm\n",
+            "  Building wheel for lightfm (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for lightfm: filename=lightfm-1.16-cp37-cp37m-linux_x86_64.whl size=705334 sha256=eb5b8f2f4e8aa61caecf1e9110703d00622f366275bd96b747a0e9db903c402c\n",
+            "  Stored in directory: /root/.cache/pip/wheels/c6/64/d4/673c7277f71ac4c5ad4835b94708c01b653ef2d3aa78ef20aa\n",
+            "Successfully built lightfm\n",
+            "Installing collected packages: lightfm\n",
+            "Successfully installed lightfm-1.16\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DK5HUJX0BSaP"
+      },
+      "source": [
+        "### Lightfm"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "9EOOLGL-AF-9"
+      },
+      "source": [
+        "import numpy as np\n",
+        "\n",
+        "from lightfm.datasets import fetch_movielens\n",
+        "\n",
+        "data = fetch_movielens(min_rating=5.0)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "7hqREA4kAiZ_",
+        "outputId": "aca4e9f1-1cfb-42b5-94ff-2757e2c65557"
+      },
+      "source": [
+        "data"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "{'item_feature_labels': array(['Toy Story (1995)', 'GoldenEye (1995)', 'Four Rooms (1995)', ...,\n",
+              "        'Sliding Doors (1998)', 'You So Crazy (1994)',\n",
+              "        'Scream of Stone (Schrei aus Stein) (1991)'], dtype=object),\n",
+              " 'item_features': <1682x1682 sparse matrix of type '<class 'numpy.float32'>'\n",
+              " \twith 1682 stored elements in Compressed Sparse Row format>,\n",
+              " 'item_labels': array(['Toy Story (1995)', 'GoldenEye (1995)', 'Four Rooms (1995)', ...,\n",
+              "        'Sliding Doors (1998)', 'You So Crazy (1994)',\n",
+              "        'Scream of Stone (Schrei aus Stein) (1991)'], dtype=object),\n",
+              " 'test': <943x1682 sparse matrix of type '<class 'numpy.int32'>'\n",
+              " \twith 2153 stored elements in COOrdinate format>,\n",
+              " 'train': <943x1682 sparse matrix of type '<class 'numpy.float32'>'\n",
+              " \twith 19048 stored elements in COOrdinate format>}"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 5
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "z851LLmcAUk4",
+        "outputId": "94f9030e-6a53-46ff-fe64-d209d00c167f"
+      },
+      "source": [
+        "print(repr(data['train']))\n",
+        "print(repr(data['test']))"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "<943x1682 sparse matrix of type '<class 'numpy.int32'>'\n",
+            "\twith 19048 stored elements in COOrdinate format>\n",
+            "<943x1682 sparse matrix of type '<class 'numpy.int32'>'\n",
+            "\twith 2153 stored elements in COOrdinate format>\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qVxGRtKzAW2c",
+        "outputId": "a523707f-9846-423c-a2c7-627672673487"
+      },
+      "source": [
+        "from lightfm import LightFM\n",
+        "\n",
+        "model = LightFM(loss='warp')\n",
+        "%time model.fit(data['train'], epochs=30, num_threads=2)"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "CPU times: user 726 ms, sys: 1 ms, total: 727 ms\n",
+            "Wall time: 373 ms\n"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<lightfm.lightfm.LightFM at 0x7f1b080e0ed0>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 4
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Yd_ICsXmAdkb",
+        "outputId": "29e801e5-c133-4032-bde3-cff179e25259"
+      },
+      "source": [
+        "from lightfm.evaluation import precision_at_k\n",
+        "\n",
+        "print(\"Train precision: %.2f\" % precision_at_k(model, data['train'], k=5).mean())\n",
+        "print(\"Test precision: %.2f\" % precision_at_k(model, data['test'], k=5).mean())"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Train precision: 0.41\n",
+            "Test precision: 0.05\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "OxNtXMDZAxHW",
+        "outputId": "2270d111-b6c4-4c0c-8f96-7c6c0dcc113e"
+      },
+      "source": [
+        "def sample_recommendation(model, data, user_ids):\n",
+        "\n",
+        "\n",
+        "    n_users, n_items = data['train'].shape\n",
+        "\n",
+        "    for user_id in user_ids:\n",
+        "        known_positives = data['item_labels'][data['train'].tocsr()[user_id].indices]\n",
+        "\n",
+        "        scores = model.predict(user_id, np.arange(n_items))\n",
+        "        top_items = data['item_labels'][np.argsort(-scores)]\n",
+        "\n",
+        "        print(\"User %s\" % user_id)\n",
+        "        print(\"     Known positives:\")\n",
+        "\n",
+        "        for x in known_positives[:3]:\n",
+        "            print(\"        %s\" % x)\n",
+        "\n",
+        "        print(\"     Recommended:\")\n",
+        "\n",
+        "        for x in top_items[:3]:\n",
+        "            print(\"        %s\" % x)\n",
+        "\n",
+        "sample_recommendation(model, data, [3, 25, 450])"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "User 3\n",
+            "     Known positives:\n",
+            "        Contact (1997)\n",
+            "        Air Force One (1997)\n",
+            "        In & Out (1997)\n",
+            "     Recommended:\n",
+            "        Good Will Hunting (1997)\n",
+            "        Apt Pupil (1998)\n",
+            "        Cop Land (1997)\n",
+            "User 25\n",
+            "     Known positives:\n",
+            "        Fargo (1996)\n",
+            "        Godfather, The (1972)\n",
+            "        L.A. Confidential (1997)\n",
+            "     Recommended:\n",
+            "        Godfather, The (1972)\n",
+            "        Fargo (1996)\n",
+            "        Star Wars (1977)\n",
+            "User 450\n",
+            "     Known positives:\n",
+            "        Event Horizon (1997)\n",
+            "        Scream (1996)\n",
+            "        Conspiracy Theory (1997)\n",
+            "     Recommended:\n",
+            "        Twister (1996)\n",
+            "        Scream (1996)\n",
+            "        Game, The (1997)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xA5NQFnbCDzZ"
+      },
+      "source": [
+        "### Surprise"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "pIE5G_wwBLbd",
+        "outputId": "b22276ad-6d7d-47ff-d1d8-dc43494dbc5a"
+      },
+      "source": [
+        "! pip install surprise"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Collecting surprise\n",
+            "  Downloading https://files.pythonhosted.org/packages/61/de/e5cba8682201fcf9c3719a6fdda95693468ed061945493dea2dd37c5618b/surprise-0.1-py2.py3-none-any.whl\n",
+            "Collecting scikit-surprise\n",
+            "\u001b[?25l  Downloading https://files.pythonhosted.org/packages/97/37/5d334adaf5ddd65da99fc65f6507e0e4599d092ba048f4302fe8775619e8/scikit-surprise-1.1.1.tar.gz (11.8MB)\n",
+            "\u001b[K     |████████████████████████████████| 11.8MB 239kB/s \n",
+            "\u001b[?25hRequirement already satisfied: joblib>=0.11 in /usr/local/lib/python3.7/dist-packages (from scikit-surprise->surprise) (1.0.1)\n",
+            "Requirement already satisfied: numpy>=1.11.2 in /usr/local/lib/python3.7/dist-packages (from scikit-surprise->surprise) (1.19.5)\n",
+            "Requirement already satisfied: scipy>=1.0.0 in /usr/local/lib/python3.7/dist-packages (from scikit-surprise->surprise) (1.4.1)\n",
+            "Requirement already satisfied: six>=1.10.0 in /usr/local/lib/python3.7/dist-packages (from scikit-surprise->surprise) (1.15.0)\n",
+            "Building wheels for collected packages: scikit-surprise\n",
+            "  Building wheel for scikit-surprise (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for scikit-surprise: filename=scikit_surprise-1.1.1-cp37-cp37m-linux_x86_64.whl size=1617614 sha256=95ff218603a4191d111b3d2ff6375bf53b03641378622da0df8e7c83bc398131\n",
+            "  Stored in directory: /root/.cache/pip/wheels/78/9c/3d/41b419c9d2aff5b6e2b4c0fc8d25c538202834058f9ed110d0\n",
+            "Successfully built scikit-surprise\n",
+            "Installing collected packages: scikit-surprise, surprise\n",
+            "Successfully installed scikit-surprise-1.1.1 surprise-0.1\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "FKWg1sflCX7k"
+      },
+      "source": [
+        "import surprise as sp\n",
+        "from surprise import Dataset\n",
+        "from surprise.model_selection import cross_validate\n",
+        "import pandas as pd"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "25UxUKLtE550"
+      },
+      "source": [
+        "data = Dataset.load_builtin(name=u'ml-100k', prompt=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "fDtq6FO3DrDY"
+      },
+      "source": [
+        "trainset = data.build_full_trainset()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "tYU0itt0ECRw",
+        "outputId": "6cb67831-d63c-4b3f-cd2e-1b6a5f6ed678"
+      },
+      "source": [
+        "benchmark = []\n",
+        "\n",
+        "for algorithm in [sp.SVD(), sp.SVDpp(), sp.SlopeOne(), sp.NMF(), sp.NormalPredictor(), sp.KNNBaseline(), sp.KNNBasic(), sp.KNNWithMeans(), sp.KNNWithZScore(), sp.BaselineOnly(), sp.CoClustering()]:\n",
+        "\n",
+        "    # Perform cross validation\n",
+        "    results = cross_validate(algorithm, data, measures=['RMSE', 'MAE'], cv=3, verbose=False)\n",
+        "\n",
+        "    # 결과를 알고리즘명과 결합\n",
+        "    tmp = pd.DataFrame.from_dict(results).mean(axis=0)\n",
+        "    tmp = tmp.append(pd.Series([str(algorithm).split(' ')[0].split('.')[-1]], index=['Algorithm']))\n",
+        "\n",
+        "    # Store data\n",
+        "    benchmark.append(tmp)\n"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Estimating biases using als...\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Estimating biases using als...\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Estimating biases using als...\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Computing the msd similarity matrix...\n",
+            "Done computing similarity matrix.\n",
+            "Estimating biases using als...\n",
+            "Estimating biases using als...\n",
+            "Estimating biases using als...\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "bci_c23kCiDL",
+        "outputId": "8d1db09f-893d-4534-ee4c-dd09a42ee579"
+      },
+      "source": [
+        "benchmark"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[test_rmse    0.945972\n",
+              " test_mae     0.746492\n",
+              " fit_time       3.8787\n",
+              " test_time    0.386377\n",
+              " Algorithm         SVD\n",
+              " dtype: object, test_rmse    0.928857\n",
+              " test_mae     0.730319\n",
+              " fit_time       114.55\n",
+              " test_time     6.49146\n",
+              " Algorithm       SVDpp\n",
+              " dtype: object, test_rmse    0.949323\n",
+              " test_mae     0.746454\n",
+              " fit_time     0.621556\n",
+              " test_time     4.53522\n",
+              " Algorithm    SlopeOne\n",
+              " dtype: object, test_rmse    0.972509\n",
+              " test_mae     0.763895\n",
+              " fit_time      4.44957\n",
+              " test_time    0.330309\n",
+              " Algorithm         NMF\n",
+              " dtype: object, test_rmse            1.51882\n",
+              " test_mae             1.21881\n",
+              " fit_time            0.129301\n",
+              " test_time           0.382862\n",
+              " Algorithm    NormalPredictor\n",
+              " dtype: object, test_rmse       0.936964\n",
+              " test_mae        0.738509\n",
+              " fit_time        0.545945\n",
+              " test_time        6.55601\n",
+              " Algorithm    KNNBaseline\n",
+              " dtype: object, test_rmse    0.988264\n",
+              " test_mae     0.781284\n",
+              " fit_time     0.273561\n",
+              " test_time     5.43079\n",
+              " Algorithm    KNNBasic\n",
+              " dtype: object, test_rmse        0.955928\n",
+              " test_mae         0.752772\n",
+              " fit_time          0.30311\n",
+              " test_time          5.6828\n",
+              " Algorithm    KNNWithMeans\n",
+              " dtype: object, test_rmse         0.957756\n",
+              " test_mae          0.751329\n",
+              " fit_time          0.367804\n",
+              " test_time          6.11884\n",
+              " Algorithm    KNNWithZScore\n",
+              " dtype: object, test_rmse        0.946532\n",
+              " test_mae         0.751198\n",
+              " fit_time         0.294292\n",
+              " test_time        0.236523\n",
+              " Algorithm    BaselineOnly\n",
+              " dtype: object, test_rmse        0.974689\n",
+              " test_mae         0.762524\n",
+              " fit_time          1.81825\n",
+              " test_time        0.314188\n",
+              " Algorithm    CoClustering\n",
+              " dtype: object]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 29
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "30EOCw68HbAI"
+      },
+      "source": [
+        "# Store results\n",
+        "surprise_results = pd.DataFrame(benchmark).set_index('Algorithm').sort_values('test_rmse', ascending=False)\n",
+        "\n",
+        "# Get data\n",
+        "data = surprise_results[['test_rmse', 'test_mae']]\n",
+        "grid = data.values\n",
+        "\n",
+        "# Create axis labels\n",
+        "x_axis = [label.split('_')[1].upper() for label in data.columns.tolist()]\n",
+        "y_axis = data.index.tolist()\n",
+        "\n",
+        "x_label = 'Function'\n",
+        "y_label = 'Algorithm'"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "f6ebmF2pHmuW"
+      },
+      "source": [
+        "# Get annotations and hovertext\n",
+        "hovertexts = []\n",
+        "annotations = []\n",
+        "for i, y_value in enumerate(y_axis):\n",
+        "    row = []\n",
+        "    for j, x_value in enumerate(x_axis):\n",
+        "        annotation = grid[i, j]\n",
+        "        row.append('Error: {:.3f}<br>{}: {}<br>{}: {}<br>Fit Time: {:.3f}s<br>Test Time: {:.3f}s'.format(annotation, y_label, y_value ,x_label, x_value, surprise_results.loc[y_value]['fit_time'], surprise_results.loc[y_value]['test_time']))\n",
+        "        annotations.append(dict(x=x_value, y=y_value, text='{:.3f}'.format(annotation), ax=0, ay=0, font=dict(color='#000000')))\n",
+        "    hovertexts.append(row)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 542
+        },
+        "id": "pSbvrPyoHo_S",
+        "outputId": "ba96ae84-7b67-4a74-d6bf-5f8212d66253"
+      },
+      "source": [
+        "import plotly.graph_objects as go\n",
+        "# 시각화\n",
+        "# Create trace\n",
+        "trace = go.Heatmap(x = x_axis,\n",
+        "                   y = y_axis,\n",
+        "                   z = data.values,\n",
+        "                   text = hovertexts,\n",
+        "                   hoverinfo = 'text',\n",
+        "                   colorscale = 'Picnic',\n",
+        "                   colorbar = dict(title = 'Error'))\n",
+        "\n",
+        "# Create layout\n",
+        "layout = go.Layout(title = 'Crossvalidated Comparison Of Surprise Algorithms',\n",
+        "                   xaxis = dict(title = x_label),\n",
+        "                   yaxis = dict(title = y_label,\n",
+        "                                tickangle = -40),\n",
+        "                   annotations = annotations)\n",
+        "\n",
+        "# Create plot\n",
+        "fig = go.Figure(data=[trace], layout=layout)\n",
+        "# for colab figure (local > iplot)\n",
+        "# iplot(fig)\n",
+        "fig.show(renderer=\"colab\")"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/html": [
+              "<html>\n",
+              "<head><meta charset=\"utf-8\" /></head>\n",
+              "<body>\n",
+              "    <div>\n",
+              "            <script src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG\"></script><script type=\"text/javascript\">if (window.MathJax) {MathJax.Hub.Config({SVG: {font: \"STIX-Web\"}});}</script>\n",
+              "                <script type=\"text/javascript\">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>\n",
+              "        <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>    \n",
+              "            <div id=\"7c38aa0f-c6ed-401e-a972-b622a4463ea5\" class=\"plotly-graph-div\" style=\"height:525px; width:100%;\"></div>\n",
+              "            <script type=\"text/javascript\">\n",
+              "                \n",
+              "                    window.PLOTLYENV=window.PLOTLYENV || {};\n",
+              "                    \n",
+              "                if (document.getElementById(\"7c38aa0f-c6ed-401e-a972-b622a4463ea5\")) {\n",
+              "                    Plotly.newPlot(\n",
+              "                        '7c38aa0f-c6ed-401e-a972-b622a4463ea5',\n",
+              "                        [{\"colorbar\": {\"title\": {\"text\": \"Error\"}}, \"colorscale\": [[0.0, \"rgb(0,0,255)\"], [0.1, \"rgb(51,153,255)\"], [0.2, \"rgb(102,204,255)\"], [0.3, \"rgb(153,204,255)\"], [0.4, \"rgb(204,204,255)\"], [0.5, \"rgb(255,255,255)\"], [0.6, \"rgb(255,204,255)\"], [0.7, \"rgb(255,153,255)\"], [0.8, \"rgb(255,102,204)\"], [0.9, \"rgb(255,102,102)\"], [1.0, \"rgb(255,0,0)\"]], \"hoverinfo\": \"text\", \"text\": [[\"Error: 1.519<br>Algorithm: NormalPredictor<br>Function: RMSE<br>Fit Time: 0.129s<br>Test Time: 0.383s\", \"Error: 1.219<br>Algorithm: NormalPredictor<br>Function: MAE<br>Fit Time: 0.129s<br>Test Time: 0.383s\"], [\"Error: 0.988<br>Algorithm: KNNBasic<br>Function: RMSE<br>Fit Time: 0.274s<br>Test Time: 5.431s\", \"Error: 0.781<br>Algorithm: KNNBasic<br>Function: MAE<br>Fit Time: 0.274s<br>Test Time: 5.431s\"], [\"Error: 0.975<br>Algorithm: CoClustering<br>Function: RMSE<br>Fit Time: 1.818s<br>Test Time: 0.314s\", \"Error: 0.763<br>Algorithm: CoClustering<br>Function: MAE<br>Fit Time: 1.818s<br>Test Time: 0.314s\"], [\"Error: 0.973<br>Algorithm: NMF<br>Function: RMSE<br>Fit Time: 4.450s<br>Test Time: 0.330s\", \"Error: 0.764<br>Algorithm: NMF<br>Function: MAE<br>Fit Time: 4.450s<br>Test Time: 0.330s\"], [\"Error: 0.958<br>Algorithm: KNNWithZScore<br>Function: RMSE<br>Fit Time: 0.368s<br>Test Time: 6.119s\", \"Error: 0.751<br>Algorithm: KNNWithZScore<br>Function: MAE<br>Fit Time: 0.368s<br>Test Time: 6.119s\"], [\"Error: 0.956<br>Algorithm: KNNWithMeans<br>Function: RMSE<br>Fit Time: 0.303s<br>Test Time: 5.683s\", \"Error: 0.753<br>Algorithm: KNNWithMeans<br>Function: MAE<br>Fit Time: 0.303s<br>Test Time: 5.683s\"], [\"Error: 0.949<br>Algorithm: SlopeOne<br>Function: RMSE<br>Fit Time: 0.622s<br>Test Time: 4.535s\", \"Error: 0.746<br>Algorithm: SlopeOne<br>Function: MAE<br>Fit Time: 0.622s<br>Test Time: 4.535s\"], [\"Error: 0.947<br>Algorithm: BaselineOnly<br>Function: RMSE<br>Fit Time: 0.294s<br>Test Time: 0.237s\", \"Error: 0.751<br>Algorithm: BaselineOnly<br>Function: MAE<br>Fit Time: 0.294s<br>Test Time: 0.237s\"], [\"Error: 0.946<br>Algorithm: SVD<br>Function: RMSE<br>Fit Time: 3.879s<br>Test Time: 0.386s\", \"Error: 0.746<br>Algorithm: SVD<br>Function: MAE<br>Fit Time: 3.879s<br>Test Time: 0.386s\"], [\"Error: 0.937<br>Algorithm: KNNBaseline<br>Function: RMSE<br>Fit Time: 0.546s<br>Test Time: 6.556s\", \"Error: 0.739<br>Algorithm: KNNBaseline<br>Function: MAE<br>Fit Time: 0.546s<br>Test Time: 6.556s\"], [\"Error: 0.929<br>Algorithm: SVDpp<br>Function: RMSE<br>Fit Time: 114.550s<br>Test Time: 6.491s\", \"Error: 0.730<br>Algorithm: SVDpp<br>Function: MAE<br>Fit Time: 114.550s<br>Test Time: 6.491s\"]], \"type\": \"heatmap\", \"x\": [\"RMSE\", \"MAE\"], \"y\": [\"NormalPredictor\", \"KNNBasic\", \"CoClustering\", \"NMF\", \"KNNWithZScore\", \"KNNWithMeans\", \"SlopeOne\", \"BaselineOnly\", \"SVD\", \"KNNBaseline\", \"SVDpp\"], \"z\": [[1.5188184436750305, 1.2188083388312665], [0.9882642308327902, 0.7812841557962761], [0.9746886791619563, 0.7625238324672069], [0.9725088531264076, 0.7638951395551139], [0.9577564624537263, 0.7513292587679746], [0.9559284398709211, 0.7527724276438121], [0.9493232932456935, 0.7464538778396698], [0.9465316736688584, 0.7511980710516433], [0.9459722650137135, 0.7464922928890805], [0.9369642251598407, 0.7385091404656304], [0.9288565131014418, 0.7303186656761458]]}],\n",
+              "                        {\"annotations\": [{\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"1.519\", \"x\": \"RMSE\", \"y\": \"NormalPredictor\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"1.219\", \"x\": \"MAE\", \"y\": \"NormalPredictor\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.988\", \"x\": \"RMSE\", \"y\": \"KNNBasic\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.781\", \"x\": \"MAE\", \"y\": \"KNNBasic\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.975\", \"x\": \"RMSE\", \"y\": \"CoClustering\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.763\", \"x\": \"MAE\", \"y\": \"CoClustering\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.973\", \"x\": \"RMSE\", \"y\": \"NMF\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.764\", \"x\": \"MAE\", \"y\": \"NMF\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.958\", \"x\": \"RMSE\", \"y\": \"KNNWithZScore\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.751\", \"x\": \"MAE\", \"y\": \"KNNWithZScore\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.956\", \"x\": \"RMSE\", \"y\": \"KNNWithMeans\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.753\", \"x\": \"MAE\", \"y\": \"KNNWithMeans\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.949\", \"x\": \"RMSE\", \"y\": \"SlopeOne\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.746\", \"x\": \"MAE\", \"y\": \"SlopeOne\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.947\", \"x\": \"RMSE\", \"y\": \"BaselineOnly\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.751\", \"x\": \"MAE\", \"y\": \"BaselineOnly\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.946\", \"x\": \"RMSE\", \"y\": \"SVD\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.746\", \"x\": \"MAE\", \"y\": \"SVD\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.937\", \"x\": \"RMSE\", \"y\": \"KNNBaseline\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.739\", \"x\": \"MAE\", \"y\": \"KNNBaseline\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.929\", \"x\": \"RMSE\", \"y\": \"SVDpp\"}, {\"ax\": 0, \"ay\": 0, \"font\": {\"color\": \"#000000\"}, \"text\": \"0.730\", \"x\": \"MAE\", \"y\": \"SVDpp\"}], \"template\": {\"data\": {\"bar\": [{\"error_x\": {\"color\": \"#2a3f5f\"}, \"error_y\": {\"color\": \"#2a3f5f\"}, \"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}}, \"type\": \"bar\"}], \"barpolar\": [{\"marker\": {\"line\": {\"color\": \"#E5ECF6\", \"width\": 0.5}}, \"type\": \"barpolar\"}], \"carpet\": [{\"aaxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"baxis\": {\"endlinecolor\": \"#2a3f5f\", \"gridcolor\": \"white\", \"linecolor\": \"white\", \"minorgridcolor\": \"white\", \"startlinecolor\": \"#2a3f5f\"}, \"type\": \"carpet\"}], \"choropleth\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"type\": \"choropleth\"}], \"contour\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"type\": \"contour\"}], \"contourcarpet\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"type\": \"contourcarpet\"}], \"heatmap\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"type\": \"heatmap\"}], \"heatmapgl\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"type\": \"heatmapgl\"}], \"histogram\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"histogram\"}], \"histogram2d\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"type\": \"histogram2d\"}], \"histogram2dcontour\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"type\": \"histogram2dcontour\"}], \"mesh3d\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"type\": \"mesh3d\"}], \"parcoords\": [{\"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"parcoords\"}], \"pie\": [{\"automargin\": true, \"type\": \"pie\"}], \"scatter\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scatter\"}], \"scatter3d\": [{\"line\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scatter3d\"}], \"scattercarpet\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scattercarpet\"}], \"scattergeo\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scattergeo\"}], \"scattergl\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scattergl\"}], \"scattermapbox\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scattermapbox\"}], \"scatterpolar\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scatterpolar\"}], \"scatterpolargl\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scatterpolargl\"}], \"scatterternary\": [{\"marker\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"type\": \"scatterternary\"}], \"surface\": [{\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}, \"colorscale\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"type\": \"surface\"}], \"table\": [{\"cells\": {\"fill\": {\"color\": \"#EBF0F8\"}, \"line\": {\"color\": \"white\"}}, \"header\": {\"fill\": {\"color\": \"#C8D4E3\"}, \"line\": {\"color\": \"white\"}}, \"type\": \"table\"}]}, \"layout\": {\"annotationdefaults\": {\"arrowcolor\": \"#2a3f5f\", \"arrowhead\": 0, \"arrowwidth\": 1}, \"coloraxis\": {\"colorbar\": {\"outlinewidth\": 0, \"ticks\": \"\"}}, \"colorscale\": {\"diverging\": [[0, \"#8e0152\"], [0.1, \"#c51b7d\"], [0.2, \"#de77ae\"], [0.3, \"#f1b6da\"], [0.4, \"#fde0ef\"], [0.5, \"#f7f7f7\"], [0.6, \"#e6f5d0\"], [0.7, \"#b8e186\"], [0.8, \"#7fbc41\"], [0.9, \"#4d9221\"], [1, \"#276419\"]], \"sequential\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]], \"sequentialminus\": [[0.0, \"#0d0887\"], [0.1111111111111111, \"#46039f\"], [0.2222222222222222, \"#7201a8\"], [0.3333333333333333, \"#9c179e\"], [0.4444444444444444, \"#bd3786\"], [0.5555555555555556, \"#d8576b\"], [0.6666666666666666, \"#ed7953\"], [0.7777777777777778, \"#fb9f3a\"], [0.8888888888888888, \"#fdca26\"], [1.0, \"#f0f921\"]]}, \"colorway\": [\"#636efa\", \"#EF553B\", \"#00cc96\", \"#ab63fa\", \"#FFA15A\", \"#19d3f3\", \"#FF6692\", \"#B6E880\", \"#FF97FF\", \"#FECB52\"], \"font\": {\"color\": \"#2a3f5f\"}, \"geo\": {\"bgcolor\": \"white\", \"lakecolor\": \"white\", \"landcolor\": \"#E5ECF6\", \"showlakes\": true, \"showland\": true, \"subunitcolor\": \"white\"}, \"hoverlabel\": {\"align\": \"left\"}, \"hovermode\": \"closest\", \"mapbox\": {\"style\": \"light\"}, \"paper_bgcolor\": \"white\", \"plot_bgcolor\": \"#E5ECF6\", \"polar\": {\"angularaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"bgcolor\": \"#E5ECF6\", \"radialaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"scene\": {\"xaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"gridwidth\": 2, \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\"}, \"yaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"gridwidth\": 2, \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\"}, \"zaxis\": {\"backgroundcolor\": \"#E5ECF6\", \"gridcolor\": \"white\", \"gridwidth\": 2, \"linecolor\": \"white\", \"showbackground\": true, \"ticks\": \"\", \"zerolinecolor\": \"white\"}}, \"shapedefaults\": {\"line\": {\"color\": \"#2a3f5f\"}}, \"ternary\": {\"aaxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"baxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}, \"bgcolor\": \"#E5ECF6\", \"caxis\": {\"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\"}}, \"title\": {\"x\": 0.05}, \"xaxis\": {\"automargin\": true, \"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"zerolinewidth\": 2}, \"yaxis\": {\"automargin\": true, \"gridcolor\": \"white\", \"linecolor\": \"white\", \"ticks\": \"\", \"title\": {\"standoff\": 15}, \"zerolinecolor\": \"white\", \"zerolinewidth\": 2}}}, \"title\": {\"text\": \"Crossvalidated Comparison Of Surprise Algorithms\"}, \"xaxis\": {\"title\": {\"text\": \"Function\"}}, \"yaxis\": {\"tickangle\": -40, \"title\": {\"text\": \"Algorithm\"}}},\n",
+              "                        {\"responsive\": true}\n",
+              "                    ).then(function(){\n",
+              "                            \n",
+              "var gd = document.getElementById('7c38aa0f-c6ed-401e-a972-b622a4463ea5');\n",
+              "var x = new MutationObserver(function (mutations, observer) {{\n",
+              "        var display = window.getComputedStyle(gd).display;\n",
+              "        if (!display || display === 'none') {{\n",
+              "            console.log([gd, 'removed!']);\n",
+              "            Plotly.purge(gd);\n",
+              "            observer.disconnect();\n",
+              "        }}\n",
+              "}});\n",
+              "\n",
+              "// Listen for the removal of the full notebook cells\n",
+              "var notebookContainer = gd.closest('#notebook-container');\n",
+              "if (notebookContainer) {{\n",
+              "    x.observe(notebookContainer, {childList: true});\n",
+              "}}\n",
+              "\n",
+              "// Listen for the clearing of the current output cell\n",
+              "var outputEl = gd.closest('.output');\n",
+              "if (outputEl) {{\n",
+              "    x.observe(outputEl, {childList: true});\n",
+              "}}\n",
+              "\n",
+              "                        })\n",
+              "                };\n",
+              "                \n",
+              "            </script>\n",
+              "        </div>\n",
+              "</body>\n",
+              "</html>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          }
+        }
+      ]
+    }
+  ]
+}
