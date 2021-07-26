@@ -1,7 +1,7 @@
 # Week3. Neural Collaborative Filtering  
 
 ### Matrix Factorization Techniques for Recommender Systems (2009, IEEE)  
-* 발표자 : 이혜린  
+* 발표자 : 류채은  
 * [![GoogleDrive Badge](https://img.shields.io/badge/Paper-405263?style=flat-square&logo=Quip&link=https://drive.google.com/file/d/1VnYsB8k4Fxu6UFhAxuTi4m01BjoH2uwS/view?usp=sharing)](https://datajobs.com/data-science-repo/Recommender-Systems-[Netflix].pdf)  
 * <a href="https://velog.io/@tobigs-recsys/MATRIX-FACTORIZATION-TECHNIQUES-FOR-RECOMMENDER-SYSTEM" target="_blank"><img src="https://img.shields.io/badge/Paper Review-20c997?style=flat-square&logo=Vimeo&logoColor=white"/></a>  
 
