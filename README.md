@@ -38,7 +38,7 @@ AI/빅데이터 연합동아리 **[투빅스](http://www.datamarket.kr/xe/page_Q
 14기 | 박지은 | [jieun-enna](https://github.com/jieun-enna) 
 || 이원도 | [stillpsy](https://github.com/stillpsy) 
 || 이혜린 | [hrlee113](https://github.com/hrlee113) 
-15기 | 강지우 | [jiwoo0212](https://github.com/jiwoo0212) 
+15기 | 강지우 | [jiwoo0212](https://github.com/jiwoo0212 ) 
 || 권오현 |[5hyeonkwon](https://github.com/5hyeonkwon)  
 || 김현지 | [KimHyeon-Ji](https://github.com/KimHyeon-Ji) 
 || 류채은 | [superbunny38](https://github.com/superbunny38) 
