@@ -3,7 +3,7 @@
 AI/빅데이터 연합동아리 **[투빅스](http://www.datamarket.kr/xe/page_QEhq64)** 추천시스템 세미나입니다.
 투빅스 13-15기가 모여 **추천시스템**을 공부하고 해당 내용을 정리한 Repository 입니다.
 
-**발표자료**와 **참고논문 목록**은 아래의 벨로그와 노션에서 확인하실 수 있습니다.  
+**발표자료**와 **참고논문 목록**은 아래의 링크를 통해 확인하실 수 있습니다.  
 * <a href="https://velog.io/@tobigs-recsys" target="_blank"><img src="https://img.shields.io/badge/Velog-20c997?style=flat-square&logo=Vimeo&logoColor=white"/></a>  
 * <a href="https://www.notion.so/14-15-41e7c8a8fb5245e1bacc315a6cce9c0b" target="_blank"><img src="https://img.shields.io/badge/Notion-000000?style=flat-square&logo=Notion&logoColor=white"/></a>
 
