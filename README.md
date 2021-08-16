@@ -44,3 +44,4 @@ AI/빅데이터 연합동아리 **[투빅스](http://www.datamarket.kr/xe/page_Q
 || 류채은 | [superbunny38](https://github.com/superbunny38) 
 || 이성범 | [SeongBeomLEE](https://github.com/SeongBeomLEE) 
 || 장아연 | [JangAyeon](https://github.com/JangAyeon)
+
